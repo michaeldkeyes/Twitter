@@ -96,7 +96,8 @@
 </template>
 
 <script>
-import { format, formatDistance } from "date-fns";
+import db from "src/boot/firebase";
+import { formatDistance } from "date-fns";
 
 export default {
   name: "PageHome",
@@ -109,18 +110,37 @@ export default {
     return {
       newTweetContent: "",
       tweets: [
-        {
-          content:
-            "Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestias velit sunt dolorem, et hic accusamus tempore maxime quae, dolores beatae maiores inventore voluptas, voluptates pariatur quod? Esse animi corrupti voluptatibus?",
-          date: 1615590443268,
-        },
-        {
-          content:
-            "Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestias velit sunt dolorem, et hic accusamus tempore maxime quae, dolores beatae maiores inventore voluptas, voluptates pariatur quod? Esse animi corrupti voluptatibus?",
-          date: 1615590462820,
-        },
+        //   {
+        //     content:
+        //       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestias velit sunt dolorem, et hic accusamus tempore maxime quae, dolores beatae maiores inventore voluptas, voluptates pariatur quod? Esse animi corrupti voluptatibus?",
+        //     date: 1615590443268,
+        //   },
+        //   {
+        //     content:
+        //       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestias velit sunt dolorem, et hic accusamus tempore maxime quae, dolores beatae maiores inventore voluptas, voluptates pariatur quod? Esse animi corrupti voluptatibus?",
+        //     date: 1615590462820,
+        //   },
       ],
     };
+  },
+  mounted() {
+    db.collection("tweets")
+      .orderBy("date")
+      .onSnapshot((snapshot) => {
+        snapshot.docChanges().forEach((change) => {
+          let tweetChange = change.doc.data();
+          if (change.type === "added") {
+            console.log("New tweet: ", tweetChange);
+            this.tweets.unshift(tweetChange);
+          }
+          if (change.type === "modified") {
+            console.log("Modified tweet: ", tweetChange);
+          }
+          if (change.type === "removed") {
+            console.log("Removed tweet: ", tweetChange);
+          }
+        });
+      });
   },
   methods: {
     addNewTweet() {
