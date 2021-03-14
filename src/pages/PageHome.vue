@@ -41,11 +41,7 @@
           enter-active-class="animated fadeIn slow"
           leave-active-class="animated fadeOut slow"
         >
-          <q-item
-            v-for="tweet in tweets"
-            :key="tweet.date"
-            class="q-py-md tweet"
-          >
+          <q-item v-for="tweet in tweets" :key="tweet.id" class="q-py-md tweet">
             <q-item-section avatar top>
               <q-avatar size="xl">
                 <img src="https://cdn.quasar.dev/img/avatar5.jpg" />
@@ -109,18 +105,7 @@ export default {
   data() {
     return {
       newTweetContent: "",
-      tweets: [
-        //   {
-        //     content:
-        //       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestias velit sunt dolorem, et hic accusamus tempore maxime quae, dolores beatae maiores inventore voluptas, voluptates pariatur quod? Esse animi corrupti voluptatibus?",
-        //     date: 1615590443268,
-        //   },
-        //   {
-        //     content:
-        //       "Lorem ipsum dolor sit amet consectetur adipisicing elit. Molestias velit sunt dolorem, et hic accusamus tempore maxime quae, dolores beatae maiores inventore voluptas, voluptates pariatur quod? Esse animi corrupti voluptatibus?",
-        //     date: 1615590462820,
-        //   },
-      ],
+      tweets: [],
     };
   },
   mounted() {
@@ -129,15 +114,18 @@ export default {
       .onSnapshot((snapshot) => {
         snapshot.docChanges().forEach((change) => {
           let tweetChange = change.doc.data();
+          tweetChange.id = change.doc.id;
           if (change.type === "added") {
-            console.log("New tweet: ", tweetChange);
             this.tweets.unshift(tweetChange);
           }
           if (change.type === "modified") {
             console.log("Modified tweet: ", tweetChange);
           }
           if (change.type === "removed") {
-            console.log("Removed tweet: ", tweetChange);
+            let index = this.tweets.findIndex(
+              (tweet) => tweet.id === tweetChange.id
+            );
+            this.tweets.splice(index, 1);
           }
         });
       });
@@ -148,13 +136,16 @@ export default {
         content: this.newTweetContent,
         date: Date.now(),
       };
-      this.tweets.unshift(newTweet);
+      db.collection("tweets").add(newTweet);
       this.newTweetContent = "";
     },
     deleteTweet(tweet) {
-      let dateToDelete = tweet.date;
-      let index = this.tweets.findIndex((tweet) => tweet.date === dateToDelete);
-      this.tweets.splice(index, 1);
+      db.collection("tweets")
+        .doc(tweet.id)
+        .delete()
+        .catch((error) => {
+          console.log("Error removing tweet", error);
+        });
     },
   },
 };
