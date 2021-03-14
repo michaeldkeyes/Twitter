@@ -74,7 +74,14 @@
                   flat
                   round
                 />
-                <q-btn color="grey" icon="far fa-heart" size="sm" flat round />
+                <q-btn
+                  :color="tweet.liked ? 'pink' : 'grey'"
+                  :icon="tweet.liked ? 'fas fa-heart' : 'far fa-heart'"
+                  size="sm"
+                  flat
+                  round
+                  @click="toggleLiked(tweet)"
+                />
                 <q-btn
                   color="grey"
                   icon="fas fa-trash"
@@ -119,7 +126,10 @@ export default {
             this.tweets.unshift(tweetChange);
           }
           if (change.type === "modified") {
-            console.log("Modified tweet: ", tweetChange);
+            let index = this.tweets.findIndex(
+              (tweet) => tweet.id === tweetChange.id
+            );
+            Object.assign(this.tweets[index], tweetChange);
           }
           if (change.type === "removed") {
             let index = this.tweets.findIndex(
@@ -135,6 +145,7 @@ export default {
       let newTweet = {
         content: this.newTweetContent,
         date: Date.now(),
+        liked: false,
       };
       db.collection("tweets").add(newTweet);
       this.newTweetContent = "";
@@ -145,6 +156,16 @@ export default {
         .delete()
         .catch((error) => {
           console.log("Error removing tweet", error);
+        });
+    },
+    toggleLiked(tweet) {
+      db.collection("tweets")
+        .doc(tweet.id)
+        .update({
+          liked: !tweet.liked,
+        })
+        .catch((error) => {
+          console.log("Error liking tweet", error);
         });
     },
   },
